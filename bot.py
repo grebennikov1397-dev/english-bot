@@ -94,11 +94,16 @@ def _ptb_worker():
 Thread(target=_ptb_worker, daemon=True).start()
 
 # ====== Flask endpoint для Telegram ======
+import asyncio
+
 @app.route(f"/{TOKEN}", methods=["POST"])
 def telegram_webhook():
     update = Update.de_json(request.get_json(force=True), application.bot)
-    # безопасно отправляем обработку в внутренний event loop PTB
-    application.create_task(application.process_update(update))
+    # отправляем задачу прямо в event loop PTB
+    asyncio.run_coroutine_threadsafe(
+        application.process_update(update),
+        application.loop
+    )
     return "ok", 200
 
 @app.get("/")
