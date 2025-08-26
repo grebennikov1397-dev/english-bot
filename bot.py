@@ -97,7 +97,8 @@ Thread(target=_ptb_worker, daemon=True).start()
 @app.route(f"/{TOKEN}", methods=["POST"])
 def telegram_webhook():
     update = Update.de_json(request.get_json(force=True), application.bot)
-    application.update_queue.put_nowait(update)
+    # безопасно отправляем обработку в внутренний event loop PTB
+    application.create_task(application.process_update(update))
     return "ok", 200
 
 @app.get("/")
